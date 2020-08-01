@@ -132,6 +132,7 @@ void switchProfile(){
  * Turn off all leds
  */
 void disableLeds(){
+    currentProfile = (currentProfile+amountOfProfiles-1)%amountOfProfiles;
     palClearLine(LINE_LED_PWR);
 }
 

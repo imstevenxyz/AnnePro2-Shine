@@ -1,19 +1,3 @@
-/*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-        http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
-*/
-
 #include "board.h"
 #include "hal.h"
 #include "ch.h"
@@ -24,61 +8,60 @@
 static void columnCallback(GPTDriver* driver);
 static void animationCallback(GPTDriver* driver);
 
-
 ioline_t ledColumns[NUM_COLUMN] = {
-  LINE_LED_COL_1, 
-  LINE_LED_COL_2, 
-  LINE_LED_COL_3, 
-  LINE_LED_COL_4, 
-  LINE_LED_COL_5, 
-  LINE_LED_COL_6, 
-  LINE_LED_COL_7, 
-  LINE_LED_COL_8, 
-  LINE_LED_COL_9, 
-  LINE_LED_COL_10,
-  LINE_LED_COL_11,
-  LINE_LED_COL_12,
-  LINE_LED_COL_13,
-  LINE_LED_COL_14
+    LINE_LED_COL_1, 
+    LINE_LED_COL_2, 
+    LINE_LED_COL_3, 
+    LINE_LED_COL_4, 
+    LINE_LED_COL_5, 
+    LINE_LED_COL_6, 
+    LINE_LED_COL_7, 
+    LINE_LED_COL_8, 
+    LINE_LED_COL_9, 
+    LINE_LED_COL_10,
+    LINE_LED_COL_11,
+    LINE_LED_COL_12,
+    LINE_LED_COL_13,
+    LINE_LED_COL_14
 };
 
 ioline_t ledRows[NUM_ROW * 3] = {
-  LINE_LED_ROW_1_R,
-  LINE_LED_ROW_1_G,
-  LINE_LED_ROW_1_B,
-  LINE_LED_ROW_2_R,
-  LINE_LED_ROW_2_G,
-  LINE_LED_ROW_2_B,
-  LINE_LED_ROW_3_R,
-  LINE_LED_ROW_3_G,
-  LINE_LED_ROW_3_B,
-  LINE_LED_ROW_4_R,
-  LINE_LED_ROW_4_G,
-  LINE_LED_ROW_4_B,
-  LINE_LED_ROW_5_R,
-  LINE_LED_ROW_5_G,
-  LINE_LED_ROW_5_B,
+    LINE_LED_ROW_1_R,
+    LINE_LED_ROW_1_G,
+    LINE_LED_ROW_1_B,
+    LINE_LED_ROW_2_R,
+    LINE_LED_ROW_2_G,
+    LINE_LED_ROW_2_B,
+    LINE_LED_ROW_3_R,
+    LINE_LED_ROW_3_G,
+    LINE_LED_ROW_3_B,
+    LINE_LED_ROW_4_R,
+    LINE_LED_ROW_4_G,
+    LINE_LED_ROW_4_B,
+    LINE_LED_ROW_5_R,
+    LINE_LED_ROW_5_G,
+    LINE_LED_ROW_5_B,
 };
 
 #define REFRESH_FREQUENCY           200
-
 #define ANIMATION_TIMER_FREQUENCY   60
 
 #define LEN(a) (sizeof(a)/sizeof(*a))
 
-// An array of basic colors used accross different lighting profiles
-// static const uint32_t colorPalette[] = {0xFF0000, 0xF0F00, 0x00F00, 0x00F0F, 0x0000F, 0xF000F, 0x50F0F};
-static const uint32_t colorPalette[] = {0x9c0000, 0x9c9900, 0x1f9c00, 0x00979c, 0x003e9c, 0x39009c, 0x9c008f};
+/*
+* Full keyboard static profiles
+* Each entry is a color in HEX
+*/
+static const uint32_t colorPalette[] = {0x9c0000, 0x9c9900, 0x1f9c00, 0x00979c};
 
-
-// The total number of lighting profiles. Each color in the color palette is a static profile of its own + custom ones 
-static const uint16_t NUM_LIGHTING_PROFILES = LEN(colorPalette) + 4;
+/*
+* Amount of profiles
+* fullStaticProfiles + Custom profiles
+*/
+static const uint16_t NUM_LIGHTING_PROFILES = LEN(colorPalette) + 3;
 
 // Indicates the ID of the current lighting profile
 static uint8_t lightingProfile = 0;
-
-// Column offset for rainbow animation
-static uint8_t colAnimOffset = 0;
 
 led_t ledColors[70];
 static uint32_t currentColumn = 0;
@@ -86,18 +69,18 @@ static uint32_t columnPWMCount = 0;
 
 // BFTM0 Configuration, this runs at 15 * REFRESH_FREQUENCY Hz
 static const GPTConfig bftm0Config = {
-  .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
-  .callback = columnCallback
+    .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
+    .callback = columnCallback
 };
 
 // Lighting animation refresh timer
 static const GPTConfig lightAnimationConfig = {
-  .frequency = ANIMATION_TIMER_FREQUENCY,
-  .callback = animationCallback
+    .frequency = ANIMATION_TIMER_FREQUENCY,
+    .callback = animationCallback
 };
 
 static const SerialConfig usart1Config = {
-  .speed = 115200
+    .speed = 115200
 };
 
 static uint8_t commandBuffer[64];
@@ -107,96 +90,119 @@ static uint8_t commandBuffer[64];
  */
 THD_WORKING_AREA(waThread1, 128);
 THD_FUNCTION(Thread1, arg) {
-
-  (void)arg;
-
-  while (true)
-  {
-    msg_t msg;
-    size_t bytesRead;
-    msg = sdGet(&SD1);
-    if (msg >= MSG_OK) {
-      switch (msg) {
-        case CMD_LED_ON:
-          
-          // Disable Interrupts while switching lighting profiles to avoid glitches
-          chSysLock();
-
-          switch(lightingProfile){
-
-            // Horizontal Rainbow Profile
-            case LEN(colorPalette):
-              for (uint16_t i=0; i<NUM_ROW; ++i){
-                for (uint16_t j=0; j<NUM_COLUMN; ++j){
-                  setKeyColor(&ledColors[i*NUM_COLUMN+j], colorPalette[i%LEN(colorPalette)]);
-                }     
-              }
-              break;
-
-            // Vertical Rainbow Profile
-            case LEN(colorPalette) + 1:
-              for (uint16_t i=0; i<NUM_COLUMN; ++i){
-                for (uint16_t j=0; j<NUM_ROW; ++j){
-                  setKeyColor(&ledColors[j*NUM_COLUMN+i], colorPalette[i%LEN(colorPalette)]);
-                }     
-              }
-              break;
-
-            // Miami Nights Profile
-            case LEN(colorPalette) + 2:
-              setAllKeysColor(ledColors, 0x00979c);
-              setModKeysColor(ledColors, 0x9c008f);
-              break;
-
-            // Animated Rainbow
-            case LEN(colorPalette) + 3:
-              for (uint16_t i=0; i<NUM_COLUMN; ++i){
-                for (uint16_t j=0; j<NUM_ROW; ++j){
-                  setKeyColor(&ledColors[j*NUM_COLUMN+i], colorPalette[i%LEN(colorPalette)]);
-                }     
-              }
-              break;
-
-            // Static Single Color Profiles
-            default:
-              setAllKeysColor(ledColors, colorPalette[lightingProfile]);
-          }
-          palSetLine(LINE_LED_PWR);
-          lightingProfile = (lightingProfile+1)%NUM_LIGHTING_PROFILES;
-
-          // Enable interrupts
-          chSysUnlock();
-          break;
-        case CMD_LED_OFF:
-          lightingProfile = (lightingProfile+LEN(colorPalette)-1)%LEN(colorPalette);
-          palClearLine(LINE_LED_PWR);
-          break;
-        case CMD_LED_SET:
-          bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
-          if (bytesRead < 4)
-            continue;
-          if (commandBuffer[0] >= NUM_ROW || commandBuffer[1] >= NUM_COLUMN)
-            continue;
-          setKeyColor(&ledColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], ((uint16_t)commandBuffer[3] << 8 | commandBuffer[2]));
-          break;
-        case CMD_LED_SET_ROW:
-          bytesRead = sdReadTimeout(&SD1, commandBuffer, sizeof(uint16_t) * NUM_COLUMN + 1, 1000);
-          if (bytesRead < sizeof(uint16_t) * NUM_COLUMN + 1)
-            continue;
-          if (commandBuffer[0] >= NUM_ROW)
-            continue;
-          memcpy(&ledColors[commandBuffer[0] * NUM_COLUMN],&commandBuffer[1], sizeof(uint16_t) * NUM_COLUMN);
-          break;
-        default:
-          break;
-      }
+    (void)arg;
+    while (true){
+        msg_t msg;
+        msg = sdGet(&SD1);
+        if (msg >= MSG_OK) {
+            executeMsg(msg);
+        }
     }
-  }
+}
+
+void executeMsg(msg_t msg){
+    switch (msg) {
+        case CMD_LED_ON:
+            switchProfile();
+            break;
+        case CMD_LED_OFF:
+            disableLeds();
+            break;
+        case CMD_LED_SET:
+            ledSet();
+            break;
+        case CMD_LED_SET_ROW:
+            ledRowSet();
+            break;
+        default:
+            break;
+    }
+}
+
+void switchProfile(){
+    chSysLock();
+
+    switch(lightingProfile){
+        case LEN(colorPalette):
+            rainbowHorizontal();
+            break;
+        case LEN(colorPalette) + 1:
+            rainbowVertical();
+            break;
+        case LEN(colorPalette) + 2:
+            miamiNights();
+            break;
+        case LEN(colorPalette) + 3:
+            animatedRainbow();
+        default:
+              setAllKeysColor(ledColors, colorPalette[lightingProfile]);
+    }
+
+    palSetLine(LINE_LED_PWR);
+    lightingProfile = (lightingProfile+1)%NUM_LIGHTING_PROFILES;
+    chSysUnlock();
+}
+
+void rainbowHorizontal(){
+    for (uint16_t i=0; i<NUM_ROW; ++i){
+        for (uint16_t j=0; j<NUM_COLUMN; ++j){
+            setKeyColor(&ledColors[i*NUM_COLUMN+j], colorPalette[i%LEN(colorPalette)]);
+        }     
+    }
+}
+
+void rainbowVertical(){
+    for (uint16_t i=0; i<NUM_COLUMN; ++i){
+        for (uint16_t j=0; j<NUM_ROW; ++j){
+            setKeyColor(&ledColors[j*NUM_COLUMN+i], colorPalette[i%LEN(colorPalette)]);
+        }     
+    }
+}
+
+void miamiNights(){
+    setAllKeysColor(ledColors, 0x00979c);
+    setModKeysColor(ledColors, 0x9c008f);
+}
+
+void animatedRainbow(){
+    for (uint16_t i=0; i<NUM_COLUMN; ++i){
+        for (uint16_t j=0; j<NUM_ROW; ++j){
+            setKeyColor(&ledColors[j*NUM_COLUMN+i], colorPalette[i%LEN(colorPalette)]);
+        }
+    }
+}
+
+void disableLeds(){
+    lightingProfile = (lightingProfile+LEN(colorPalette)-1)%LEN(colorPalette);
+    palClearLine(LINE_LED_PWR);
+}
+
+void ledSet(){
+    size_t bytesRead;
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
+    if (bytesRead >= 4){
+        if (commandBuffer[0] < NUM_ROW || commandBuffer[1] < NUM_COLUMN){
+            setKeyColor(&ledColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], ((uint16_t)commandBuffer[3] << 8 | commandBuffer[2]));
+        }
+    }
+}
+
+void ledRowSet(){
+    size_t bytesRead;
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, sizeof(uint16_t) * NUM_COLUMN + 1, 1000);
+    if (bytesRead >= sizeof(uint16_t) * NUM_COLUMN + 1){
+        if (commandBuffer[0] < NUM_ROW){
+            memcpy(&ledColors[commandBuffer[0] * NUM_COLUMN],&commandBuffer[1], sizeof(uint16_t) * NUM_COLUMN);
+        }
+    }
 }
 
 inline uint8_t min(uint8_t a, uint8_t b){
   return a<=b?a:b;
 }
+
+// Column offset for rainbow animation
+static uint8_t colAnimOffset = 0;
 
 // Update lighting table as per animation
 void animationCallback(GPTDriver* _driver){
@@ -257,19 +263,13 @@ void columnCallback(GPTDriver* _driver)
 
 /*
  * Application entry point.
+ * HAL initialization en setup
+ * Low priotiy thread
  */
 int main(void) {
-  /*
-   * System initializations.
-   * - HAL initialization, this also initializes the configured device drivers
-   *   and performs the board-specific initializations.
-   * - Kernel initialization, the main() function becomes a thread and the
-   *   RTOS is active.
-   */
   halInit();
   chSysInit();
 
-  // Setup UART1
   sdStart(&SD1, &usart1Config);
   palSetLine(LINE_LED_PWR);
 
@@ -282,10 +282,8 @@ int main(void) {
   gptStartContinuous(&GPTD_BFTM1, 1);
 
   chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-  /* This is now the idle thread loop, you may perform here a low priority
-     task but you must never try to sleep or wait in this loop. Note that
-     this tasks runs at the lowest priority level so any instruction added
-     here will be executed after all other tasks have been started.*/
+
   while (true) {
+
   }
 }

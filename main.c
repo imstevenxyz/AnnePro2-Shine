@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include "board.h"
 #include "hal.h"
 #include "ch.h"
@@ -10,8 +11,10 @@
 static void columnCallback(GPTDriver* driver);
 // static void animationCallback(GPTDriver* driver);
 inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t port);
-static void executeMsg(msg_t msg);
-static void disableLeds(void);
+void executeMsg(msg_t msg);
+void disableLeds(void);
+void ledSet(void);
+void ledRowSet(void);
 
 #define REFRESH_FREQUENCY   200
 
@@ -81,29 +84,54 @@ THD_FUNCTION(Thread1, arg) {
     }
 }
 
-static void executeMsg(msg_t msg){
+void executeMsg(msg_t msg){
     switch (msg) {
         case CMD_LED_ON:
-            setAllKeysColor(&currentKeyLedColors, 0x00979c);
+            chSysLock();
+            setAllKeysColor(currentKeyLedColors, 0x1f9c00);
+            palSetLine(LINE_LED_PWR);
+            chSysUnlock();
             break;
         case CMD_LED_OFF:
             disableLeds();
             break;
         case CMD_LED_SET:
-            
+            ledSet();
             break;
         case CMD_LED_SET_ROW:
-            
+            ledRowSet();
             break;
         default:
             break;
     }
 }
 
-static void disableLeds(){
+void disableLeds(){
     palClearLine(LINE_LED_PWR);
 }
 
+#include "string.h"
+static uint8_t commandBuffer[64];
+
+void ledSet(){
+    size_t bytesRead;
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
+    if (bytesRead >= 4){
+        if (commandBuffer[0] < NUM_ROW || commandBuffer[1] < NUM_COLUMN){
+            setKeyColor(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], ((uint16_t)commandBuffer[3] << 8 | commandBuffer[2]));
+        }
+    }
+}
+
+void ledRowSet(){
+    size_t bytesRead;
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, sizeof(uint16_t) * NUM_COLUMN + 1, 1000);
+    if (bytesRead >= sizeof(uint16_t) * NUM_COLUMN + 1){
+        if (commandBuffer[0] < NUM_ROW){
+            memcpy(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN],&commandBuffer[1], sizeof(uint16_t) * NUM_COLUMN);
+        }
+    }
+}
 
 static uint32_t currentColumn = 0;
 static uint32_t columnPWMCount = 0;
@@ -139,7 +167,6 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
         palClearLine(port);
     }
 }
-
 
 /*
  * Application entry point.

@@ -8,6 +8,16 @@
 static void columnCallback(GPTDriver* driver);
 static void animationCallback(GPTDriver* driver);
 
+void executeMsg(msg_t msg);
+void switchProfile(void);
+void rainbowHorizontal(void);
+void rainbowVertical(void);
+void miamiNights(void);
+void animatedRainbow(void);
+void disableLeds(void);
+void ledSet(void);
+void ledRowSet(void);
+
 ioline_t ledColumns[NUM_COLUMN] = {
     LINE_LED_COL_1, 
     LINE_LED_COL_2, 
@@ -58,7 +68,7 @@ static const uint32_t colorPalette[] = {0x9c0000, 0x9c9900, 0x1f9c00, 0x00979c};
 * Amount of profiles
 * fullStaticProfiles + Custom profiles
 */
-static const uint16_t NUM_LIGHTING_PROFILES = LEN(colorPalette) + 3;
+static const uint16_t NUM_LIGHTING_PROFILES = LEN(colorPalette) + 4;
 
 // Indicates the ID of the current lighting profile
 static uint8_t lightingProfile = 0;
@@ -134,6 +144,7 @@ void switchProfile(){
             break;
         case LEN(colorPalette) + 3:
             animatedRainbow();
+            break;
         default:
               setAllKeysColor(ledColors, colorPalette[lightingProfile]);
     }

@@ -17,25 +17,15 @@ void disableLeds(void);
 void ledSet(void);
 void ledRowSet(void);
 
+#define LED_ACTIVE_ON_START true
 #define REFRESH_FREQUENCY   200
 
 /*
- * Serial configuration
+ * Active profiles
+ * Add profiles from source/profiles.h in the profile array
  */
-static const SerialConfig usart1Config = {
-    .speed = 115200
-};
-
-/*
- * Column multiplex configurations
- */
-static const GPTConfig bftm0Config = {
-    .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
-    .callback = columnCallback
-};
-
 typedef void (*profile)( led_t* );
-profile profiles[4] = {rainbowHorizontal, rainbowVertical, miamiNights, red};
+profile profiles[4] = {miamiNights, rainbowHorizontal, rainbowVertical, red};
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
@@ -76,15 +66,33 @@ ioline_t ledRows[NUM_ROW * 3] = {
 };
 
 /*
+ * Serial configuration
+ */
+static const SerialConfig usart1Config = {
+    .speed = 115200
+};
+
+/*
+ * Column multiplex configurations
+ */
+static const GPTConfig bftm0Config = {
+    .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
+    .callback = columnCallback
+};
+
+/*
  * Thread 1.
  */
 THD_WORKING_AREA(waThread1, 128);
 THD_FUNCTION(Thread1, arg) {
     (void)arg;
-    while (true){
+    
+    if(LED_ACTIVE_ON_START) executeMsg(CMD_LED_ON);
+    
+    while(true){
         msg_t msg;
         msg = sdGet(&SD1);
-        if (msg >= MSG_OK) {
+        if(msg >= MSG_OK){
             executeMsg(msg);
         }
     }
@@ -109,6 +117,9 @@ void executeMsg(msg_t msg){
     }
 }
 
+/*
+ * Switch to next profile and execute it
+ */
 void switchProfile(){
     chSysLock();
     profiles[currentProfile](currentKeyLedColors);
@@ -117,6 +128,9 @@ void switchProfile(){
     chSysUnlock();
 }
 
+/*
+ * Turn off all leds
+ */
 void disableLeds(){
     palClearLine(LINE_LED_PWR);
 }
@@ -127,8 +141,8 @@ static uint8_t commandBuffer[64];
 void ledSet(){
     size_t bytesRead;
     bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
-    if (bytesRead >= 4){
-        if (commandBuffer[0] < NUM_ROW || commandBuffer[1] < NUM_COLUMN){
+    if(bytesRead >= 4){
+        if(commandBuffer[0] < NUM_ROW || commandBuffer[1] < NUM_COLUMN){
             setKeyColor(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], ((uint16_t)commandBuffer[3] << 8 | commandBuffer[2]));
         }
     }
@@ -137,8 +151,8 @@ void ledSet(){
 void ledRowSet(){
     size_t bytesRead;
     bytesRead = sdReadTimeout(&SD1, commandBuffer, sizeof(uint16_t) * NUM_COLUMN + 1, 1000);
-    if (bytesRead >= sizeof(uint16_t) * NUM_COLUMN + 1){
-        if (commandBuffer[0] < NUM_ROW){
+    if(bytesRead >= sizeof(uint16_t) * NUM_COLUMN + 1){
+        if(commandBuffer[0] < NUM_ROW){
             memcpy(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN],&commandBuffer[1], sizeof(uint16_t) * NUM_COLUMN);
         }
     }
@@ -153,7 +167,7 @@ void columnCallback(GPTDriver* _driver){
     currentColumn = (currentColumn+1) % NUM_COLUMN;
     palSetLine(ledColumns[currentColumn]);
 
-    if (columnPWMCount < 255){
+    if(columnPWMCount < 255){
         for (size_t row = 0; row < NUM_ROW; row++){
             const led_t keyLED = currentKeyLedColors[currentColumn + (NUM_COLUMN * row)];
             const uint8_t red = keyLED.red;
@@ -184,7 +198,7 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
  * HAL initialization en setup
  * Create Thread 1
  */
-int main(void) {
+int main(void){
     halInit();
     chSysInit();
 
@@ -201,7 +215,7 @@ int main(void) {
 
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
-    while (true) {
+    while(true){
         // Low priority thread
     }
 }

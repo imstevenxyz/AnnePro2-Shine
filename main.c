@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include "board.h"
 #include "hal.h"
 #include "ch.h"

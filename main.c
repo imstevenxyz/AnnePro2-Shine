@@ -3,6 +3,7 @@
 #include "ch.h"
 #include "ap2_qmk_led.h"
 #include "light_utils.h"
+#include "profiles.h"
 
 /*
  * Function declarations
@@ -87,7 +88,7 @@ void executeMsg(msg_t msg){
     switch (msg) {
         case CMD_LED_ON:
             chSysLock();
-            setAllKeysColor(currentKeyLedColors, 0x1f9c00);
+            miamiNights(currentKeyLedColors);
             palSetLine(LINE_LED_PWR);
             chSysUnlock();
             break;

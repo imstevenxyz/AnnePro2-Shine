@@ -12,6 +12,7 @@ static void columnCallback(GPTDriver* driver);
 // static void animationCallback(GPTDriver* driver);
 inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t port);
 void executeMsg(msg_t msg);
+void switchProfile(void);
 void disableLeds(void);
 void ledSet(void);
 void ledRowSet(void);
@@ -32,6 +33,11 @@ static const GPTConfig bftm0Config = {
     .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
     .callback = columnCallback
 };
+
+typedef void (*profile)( led_t* );
+profile profiles[4] = {rainbowHorizontal, rainbowVertical, miamiNights, red};
+static uint8_t currentProfile = 0;
+static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
 led_t currentKeyLedColors[70];
 ioline_t ledColumns[NUM_COLUMN] = {
@@ -87,10 +93,7 @@ THD_FUNCTION(Thread1, arg) {
 void executeMsg(msg_t msg){
     switch (msg) {
         case CMD_LED_ON:
-            chSysLock();
-            miamiNights(currentKeyLedColors);
-            palSetLine(LINE_LED_PWR);
-            chSysUnlock();
+            switchProfile();
             break;
         case CMD_LED_OFF:
             disableLeds();
@@ -104,6 +107,14 @@ void executeMsg(msg_t msg){
         default:
             break;
     }
+}
+
+void switchProfile(){
+    chSysLock();
+    profiles[currentProfile](currentKeyLedColors);
+    currentProfile = (currentProfile+1)%amountOfProfiles;
+    palSetLine(LINE_LED_PWR);
+    chSysUnlock();
 }
 
 void disableLeds(){

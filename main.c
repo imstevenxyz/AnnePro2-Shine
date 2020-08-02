@@ -1,6 +1,7 @@
 #include "board.h"
 #include "hal.h"
 #include "ch.h"
+#include "string.h"
 #include "ap2_qmk_led.h"
 #include "light_utils.h"
 #include "profiles.h"
@@ -9,23 +10,25 @@
  * Function declarations
  */
 static void columnCallback(GPTDriver* driver);
-// static void animationCallback(GPTDriver* driver);
+static void animationCallback(GPTDriver* driver);
 inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t port);
 void executeMsg(msg_t msg);
 void switchProfile(void);
+void executeProfile(void);
 void disableLeds(void);
 void ledSet(void);
 void ledRowSet(void);
 
-#define LED_ACTIVE_ON_START true
+#define LED_ACTIVE_ON_START TRUE
 #define REFRESH_FREQUENCY   200
+#define ANIMATION_TIMER_FREQUENCY   60
 
 /*
  * Active profiles
  * Add profiles from source/profiles.h in the profile array
  */
 typedef void (*profile)( led_t* );
-profile profiles[4] = {miamiNights, rainbowHorizontal, rainbowVertical, red};
+profile profiles[5] = {miamiNights, rainbowHorizontal, rainbowVertical, red, animatedRainbow};
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
@@ -73,11 +76,19 @@ static const SerialConfig usart1Config = {
 };
 
 /*
- * Column multiplex configurations
+ * Column multiplex configuration
  */
 static const GPTConfig bftm0Config = {
     .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
     .callback = columnCallback
+};
+
+/*
+ * Animation configuration
+ */
+static const GPTConfig lightAnimationConfig = {
+    .frequency = ANIMATION_TIMER_FREQUENCY,
+    .callback = animationCallback
 };
 
 /*
@@ -87,7 +98,7 @@ THD_WORKING_AREA(waThread1, 128);
 THD_FUNCTION(Thread1, arg) {
     (void)arg;
     
-    if(LED_ACTIVE_ON_START) executeMsg(CMD_LED_ON);
+    if(LED_ACTIVE_ON_START) executeProfile();
     
     while(true){
         msg_t msg;
@@ -98,6 +109,9 @@ THD_FUNCTION(Thread1, arg) {
     }
 }
 
+/*
+ * Execute action based on a message
+ */
 void executeMsg(msg_t msg){
     switch (msg) {
         case CMD_LED_ON:
@@ -122,21 +136,26 @@ void executeMsg(msg_t msg){
  */
 void switchProfile(){
     chSysLock();
-    profiles[currentProfile](currentKeyLedColors);
     currentProfile = (currentProfile+1)%amountOfProfiles;
-    palSetLine(LINE_LED_PWR);
+    executeProfile();
     chSysUnlock();
+}
+
+/*
+ * Execute current profile
+ */
+void executeProfile(){
+    profiles[currentProfile](currentKeyLedColors);
+    palSetLine(LINE_LED_PWR);
 }
 
 /*
  * Turn off all leds
  */
 void disableLeds(){
-    currentProfile = (currentProfile+amountOfProfiles-1)%amountOfProfiles;
     palClearLine(LINE_LED_PWR);
 }
 
-#include "string.h"
 static uint8_t commandBuffer[64];
 
 void ledSet(){
@@ -194,9 +213,20 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
     }
 }
 
+void animationCallback(GPTDriver* _driver){
+
+    profile currentFunction = profiles[currentProfile];
+    if(currentFunction == animatedRainbow){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/5);
+        currentFunction(currentKeyLedColors);
+    }
+}
+
+
 /*
  * Application entry point.
- * HAL initialization en setup
+ * HAL initialization
+ * Setup timers
  * Create Thread 1
  */
 int main(void){
@@ -206,13 +236,11 @@ int main(void){
     sdStart(&SD1, &usart1Config);
     palSetLine(LINE_LED_PWR);
 
-    // Setup Column Multiplex Timer
     gptStart(&GPTD_BFTM0, &bftm0Config);
     gptStartContinuous(&GPTD_BFTM0, 1);
 
-    // Setup Animation Timer
-    // gptStart(&GPTD_BFTM1, &lightAnimationConfig);
-    // gptStartContinuous(&GPTD_BFTM1, 1);
+    gptStart(&GPTD_BFTM1, &lightAnimationConfig);
+    gptStartContinuous(&GPTD_BFTM1, 1);
 
     chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 

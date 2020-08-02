@@ -135,24 +135,25 @@ void executeMsg(msg_t msg){
  * Switch to next profile and execute it
  */
 void switchProfile(){
-    chSysLock();
     currentProfile = (currentProfile+1)%amountOfProfiles;
     executeProfile();
-    chSysUnlock();
 }
 
 /*
  * Execute current profile
  */
 void executeProfile(){
+    chSysLock();
     profiles[currentProfile](currentKeyLedColors);
     palSetLine(LINE_LED_PWR);
+    chSysUnlock();
 }
 
 /*
  * Turn off all leds
  */
 void disableLeds(){
+    currentProfile = (currentProfile+amountOfProfiles-1)%amountOfProfiles;
     palClearLine(LINE_LED_PWR);
 }
 
@@ -214,10 +215,9 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
 }
 
 void animationCallback(GPTDriver* _driver){
-
     profile currentFunction = profiles[currentProfile];
     if(currentFunction == animatedRainbow){
-        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/5);
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/7);
         currentFunction(currentKeyLedColors);
     }
 }

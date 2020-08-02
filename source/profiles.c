@@ -4,7 +4,11 @@ void red(led_t* currentKeyLedColors){
     setAllKeysColor(currentKeyLedColors, 0x9c0000);
 }
 
-static const uint32_t colorPalette[] = {0x9c0000, 0x9c9900, 0x1f9c00, 0x00979c, 0x003e9c, 0x39009c, 0x9c008f};
+static const uint32_t colorPalette[] = {
+    0xFF0000, 0xFF7F00, 0xFFFF00, 0x7FFF00, 
+    0x00FF00, 0x00FF7F, 0x00FFFF, 0x007FFF,
+    0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F,
+};
 #define LEN(a) (sizeof(a)/sizeof(*a))
 
 void miamiNights(led_t* currentKeyLedColors){

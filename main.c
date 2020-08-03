@@ -120,6 +120,14 @@ void executeMsg(msg_t msg){
         case CMD_LED_OFF:
             disableLeds();
             break;
+        case CMD_LED_BRT_DOWN:
+            downBrightness();
+            executeProfile();
+            break;
+        case CMD_LED_BRT_UP:
+            upBrightness();
+            executeProfile();
+            break;   
         case CMD_LED_SET:
             ledSet();
             break;

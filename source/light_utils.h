@@ -7,7 +7,6 @@
 /*
     Structs
 */
-// Struct defining an LED and its RGB color components
 typedef struct {
     uint8_t red, green, blue;
 } led_t;
@@ -18,6 +17,8 @@ typedef struct {
 void setAllKeysColor(led_t* currentKeyLedColors, uint32_t color);
 void setModKeysColor(led_t* currentKeyLedColors, uint32_t color);
 void setKeyColor(led_t *key, uint32_t color);
-
+void upBrightness(void);
+void downBrightness(void);
+led_t rgbWithBrtModifier(uint32_t color);
 
 #endif

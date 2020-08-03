@@ -127,7 +127,7 @@ void executeMsg(msg_t msg){
         case CMD_LED_BRT_UP:
             upBrightness();
             executeProfile();
-            break;   
+            break; 
         case CMD_LED_SET:
             ledSet();
             break;
@@ -169,11 +169,14 @@ static uint8_t commandBuffer[64];
 
 void ledSet(){
     size_t bytesRead;
-    bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
-    if(bytesRead >= 4){
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, 5, 10000);
+    if(bytesRead == 5){
         if(commandBuffer[0] < NUM_ROW || commandBuffer[1] < NUM_COLUMN){
-            setKeyColor(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], ((uint16_t)commandBuffer[3] << 8 | commandBuffer[2]));
+            uint32_t color = ((uint32_t)commandBuffer[4] << 16 | (uint16_t)commandBuffer[3] << 8 | (uint8_t)commandBuffer[2]);
+            setKeyColor(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], color);
         }
+    }else{
+        executeProfile();
     }
 }
 

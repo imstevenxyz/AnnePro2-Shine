@@ -14,7 +14,6 @@ static const uint8_t modKeyIDs[] = {0, 13, 14, 28, 40, 41, 42, 54, 55, 56, 57, 5
  * Set all keys to the same color
  */
 void setAllKeysColor(led_t* currentKeyLedColors, uint32_t color){
-
     led_t rgb = rgbWithBrtModifier(color);
 
     for (uint16_t i=0; i<NUM_COLUMN * NUM_ROW; ++i){
@@ -22,21 +21,18 @@ void setAllKeysColor(led_t* currentKeyLedColors, uint32_t color){
         currentKeyLedColors[i].green = rgb.green;
         currentKeyLedColors[i].blue = rgb.blue;
     }
-
 }
 
 /*
  * Set all modifier keys to the same color
  */
 void setModKeysColor(led_t* currentKeyLedColors, uint32_t color){
-    const uint8_t red = (color >> 16) & 0xFF;
-    const uint8_t green = (color >> 8) & 0xFF;
-    const uint8_t blue = color & 0xFF;
+    led_t rgb = rgbWithBrtModifier(color);
     
     for (uint16_t i=0; i<LEN(modKeyIDs); ++i){
-        currentKeyLedColors[modKeyIDs[i]].red = red;
-        currentKeyLedColors[modKeyIDs[i]].green = green;
-        currentKeyLedColors[modKeyIDs[i]].blue = blue;
+        currentKeyLedColors[modKeyIDs[i]].red = rgb.red;
+        currentKeyLedColors[modKeyIDs[i]].green = rgb.green;
+        currentKeyLedColors[modKeyIDs[i]].blue = rgb.blue;
     }
 
 }
@@ -45,9 +41,10 @@ void setModKeysColor(led_t* currentKeyLedColors, uint32_t color){
  * Set key to a color
  */
 void setKeyColor(led_t *key, uint32_t color){
-    key->red = (color >> 16) & 0xFF;
-    key->green = (color >> 8) & 0xFF;
-    key->blue = color & 0xFF;
+    led_t rgb = rgbWithBrtModifier(color);
+    key->red = rgb.red;
+    key->green = rgb.green;
+    key->blue = rgb.blue;
 }
 
 /*
@@ -65,7 +62,7 @@ void downBrightness(){
 }
 
 /*
- * Convert to RGB-255 with brightness modifier
+ * Convert HEX color to RGB-255 with the brightness modifier
  */
 inline led_t rgbWithBrtModifier(uint32_t color){
     const uint8_t red = (color >> 16) & 0xFF;

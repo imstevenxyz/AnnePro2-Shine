@@ -17,27 +17,21 @@ void miamiNights(led_t* currentKeyLedColors){
 }
 
 void rainbowHorizontal(led_t* currentKeyLedColors){
-    for (uint16_t i=0; i<NUM_ROW; ++i){
-        for (uint16_t j=0; j<NUM_COLUMN; ++j){
-            setKeyColor(&currentKeyLedColors[i*NUM_COLUMN+j], colorPalette[i%LEN(colorPalette)]);
-        }     
+    for (uint8_t i=0; i<NUM_ROW; ++i){
+        setRowKeysColor(currentKeyLedColors, i, colorPalette[i%LEN(colorPalette)]); 
     }
 }
 
 void rainbowVertical(led_t* currentKeyLedColors){
-    for (uint16_t i=0; i<NUM_COLUMN; ++i){
-        for (uint16_t j=0; j<NUM_ROW; ++j){
-            setKeyColor(&currentKeyLedColors[j*NUM_COLUMN+i], colorPalette[i%LEN(colorPalette)]);
-        }     
+    for (uint8_t i=0; i<NUM_COLUMN; ++i){
+        setColumnKeysColor(currentKeyLedColors, i, colorPalette[i%LEN(colorPalette)]);
     }
 }
 
 static uint8_t colAnimOffset = 0;
 void animatedRainbow(led_t* currentKeyLedColors){
-    for (uint16_t i=0; i<NUM_COLUMN; ++i){
-        for (uint16_t j=0; j<NUM_ROW; ++j){
-            setKeyColor(&currentKeyLedColors[j*NUM_COLUMN+i], colorPalette[(i + colAnimOffset)%LEN(colorPalette)]);
-        }     
+    for (uint8_t i=0; i<NUM_COLUMN; ++i){
+        setColumnKeysColor(currentKeyLedColors, i, colorPalette[(i + colAnimOffset)%LEN(colorPalette)]);
     }
     colAnimOffset = (colAnimOffset + 1)%LEN(colorPalette);
 }

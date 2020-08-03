@@ -34,7 +34,28 @@ void setModKeysColor(led_t* currentKeyLedColors, uint32_t color){
         currentKeyLedColors[modKeyIDs[i]].green = rgb.green;
         currentKeyLedColors[modKeyIDs[i]].blue = rgb.blue;
     }
+}
 
+/*
+ * Set all keys from a column to the same color
+ */
+void setColumnKeysColor(led_t* currentKeyLedColors, uint8_t column, uint32_t color){
+    led_t rgb = rgbWithBrtModifier(color);
+
+    for (uint8_t i=0; i<NUM_ROW; i++){
+        setKeyColor(&currentKeyLedColors[i * NUM_COLUMN + column], color);
+    }
+}
+
+/*
+ * Set all keys from a row to the same color
+ */
+void setRowKeysColor(led_t* currentKeyLedColors, uint8_t row, uint32_t color){
+    led_t rgb = rgbWithBrtModifier(color);
+
+    for (uint8_t i=0; i<NUM_COLUMN; i++){
+        setKeyColor(&currentKeyLedColors[row * NUM_COLUMN + i], color);
+    }
 }
 
 /*

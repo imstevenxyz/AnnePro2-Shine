@@ -16,6 +16,8 @@ typedef struct {
 */
 void setAllKeysColor(led_t* currentKeyLedColors, uint32_t color);
 void setModKeysColor(led_t* currentKeyLedColors, uint32_t color);
+void setColumnKeysColor(led_t* currentKeyLedColors, uint8_t column, uint32_t color);
+void setRowKeysColor(led_t* currentKeyLedColors, uint8_t row, uint32_t color);
 void setKeyColor(led_t *key, uint32_t color);
 void upBrightness(void);
 void downBrightness(void);

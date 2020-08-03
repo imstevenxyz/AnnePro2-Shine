@@ -1,15 +1,15 @@
 #include "profiles.h"
 
-void red(led_t* currentKeyLedColors){
-    setAllKeysColor(currentKeyLedColors, 0x9c0000);
-}
-
 static const uint32_t colorPalette[] = {
     0xFF0000, 0xFF7F00, 0xFFFF00, 0x7FFF00, 
     0x00FF00, 0x00FF7F, 0x00FFFF, 0x007FFF,
     0x0000FF, 0x7F00FF, 0xFF00FF, 0xFF007F,
 };
 #define LEN(a) (sizeof(a)/sizeof(*a))
+
+void red(led_t* currentKeyLedColors){
+    setAllKeysColor(currentKeyLedColors, 0x9c0000);
+}
 
 void miamiNights(led_t* currentKeyLedColors){
     setAllKeysColor(currentKeyLedColors, 0x00979c);

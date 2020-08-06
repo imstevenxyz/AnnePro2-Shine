@@ -32,7 +32,7 @@ profile profiles[5] = {miamiNights, rainbowHorizontal, rainbowVertical, red, ani
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
-led_t currentKeyLedColors[70];
+led_t currentKeyLedColors[NUM_COLUMN * NUM_ROW];
 ioline_t ledColumns[NUM_COLUMN] = {
     LINE_LED_COL_1, 
     LINE_LED_COL_2, 
@@ -131,9 +131,6 @@ void executeMsg(msg_t msg){
         case CMD_LED_SET:
             ledSet();
             break;
-        case CMD_LED_SET_ROW:
-            ledRowSet();
-            break;
         default:
             break;
     }
@@ -168,6 +165,24 @@ void disableLeds(){
 static uint8_t commandBuffer[64];
 
 void ledSet(){
+    uint8_t setMsg = sdGet(&SD1);
+    switch (setMsg){
+        case SET_KEY:
+            break;
+        case SET_COL:
+            break;
+        case SET_ROW:
+            break;
+        case SET_FN1:
+            break;
+        case SET_FN2:
+            break;
+        case SET_MOD:
+            break;
+        default:
+            break;
+    }
+
     size_t bytesRead;
     bytesRead = sdReadTimeout(&SD1, commandBuffer, 5, 10000);
     if(bytesRead == 5){

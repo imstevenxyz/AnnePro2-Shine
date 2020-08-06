@@ -1,8 +1,14 @@
 #pragma once
 
 #define CMD_LED_ON                          0x10
-#define CMD_LED_OFF                         0x20
-#define CMD_LED_BRT_UP                      0x30
-#define CMD_LED_BRT_DOWN                    0x40
-#define CMD_LED_SET                         0x50
-#define CMD_LED_SET_ROW                     0x60
+#define CMD_LED_OFF                         0x11
+#define CMD_LED_BRT_UP                      0x12
+#define CMD_LED_BRT_DOWN                    0x13
+
+#define CMD_LED_SET                         0xA0
+#define SET_KEY                             0xA1
+#define SET_ROW                             0xA2
+#define SET_COL                             0xA3
+#define SET_FN1                             0xA4
+#define SET_FN2                             0xA5
+#define SET_MOD                             0xA6

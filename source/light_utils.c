@@ -12,7 +12,7 @@ static const uint8_t modKeyIDs[] = {0, 13, 14, 28, 40, 41, 42, 54, 55, 56, 57, 5
 static const uint8_t fnLayer1Keys[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, // ~ F1-F12
     16, 24, 25, 26, // Up, PS, HOME, END
-    29. 30, 40, 47, 48, // Left, Down, right, PGUP, PGDN
+    29, 30, 40, 47, 48, // Left, Down, right, PGUP, PGDN
     61, 62, // INSERT, DELETE
     75 // FN1
 };
@@ -64,7 +64,7 @@ void setFN1KeysColor(led_t* currentKeyLedColors, uint32_t color){
 /*
  * Set all FN2 keys to the same color
  */
-void setFN1KeysColor(led_t* currentKeyLedColors, uint32_t color){
+void setFN2KeysColor(led_t* currentKeyLedColors, uint32_t color){
     led_t rgb = rgbWithBrtModifier(color);
     
     for (uint16_t i=0; i<LEN(fnLayer2Keys); ++i){

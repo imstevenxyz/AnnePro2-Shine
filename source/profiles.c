@@ -9,8 +9,17 @@ static const uint32_t colorPalette[] = {
 #define LEN(a) (sizeof(a)/sizeof(*a))
 
 void red(led_t* currentKeyLedColors){
-    setAllKeysColor(currentKeyLedColors, 0x9c0000);
+    setAllKeysColor(currentKeyLedColors, 0xFF0000);
 }
+
+void green(led_t* currentKeyLedColors){
+    setAllKeysColor(currentKeyLedColors, 0x00FF00);
+}
+
+void blue(led_t* currentKeyLedColors){
+    setAllKeysColor(currentKeyLedColors, 0x0000FF);
+}
+
 
 void miamiNights(led_t* currentKeyLedColors){
     setAllKeysColor(currentKeyLedColors, 0x00979c);

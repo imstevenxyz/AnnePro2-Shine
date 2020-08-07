@@ -246,7 +246,7 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
 
 void animationCallback(GPTDriver* _driver){
     if(bootStatus){
-        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/7);
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/4);
         animatedBoot(currentKeyLedColors);
         return;
     }

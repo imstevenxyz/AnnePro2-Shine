@@ -5,6 +5,8 @@
 #define CMD_LED_BRT_UP                      0x12
 #define CMD_LED_BRT_DOWN                    0x13
 
+#define CMD_POST_INIT                       0x20
+
 #define CMD_LED_SET                         0xA0
 #define SET_KEY                             0xA1
 #define SET_ROW                             0xA2

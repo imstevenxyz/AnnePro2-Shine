@@ -32,6 +32,8 @@ profile profiles[5] = {miamiNights, rainbowHorizontal, rainbowVertical, red, ani
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
+static bool bootStatus = true;
+
 led_t currentKeyLedColors[NUM_COLUMN * NUM_ROW];
 ioline_t ledColumns[NUM_COLUMN] = {
     LINE_LED_COL_1, 
@@ -97,9 +99,7 @@ static const GPTConfig lightAnimationConfig = {
 THD_WORKING_AREA(waThread1, 128);
 THD_FUNCTION(Thread1, arg) {
     (void)arg;
-    
-    if(LED_ACTIVE_ON_START) executeProfile();
-    
+     
     while(true){
         msg_t msg;
         msg = sdGet(&SD1);
@@ -127,7 +127,11 @@ void executeMsg(msg_t msg){
         case CMD_LED_BRT_UP:
             upBrightness();
             executeProfile();
-            break; 
+            break;
+        case CMD_POST_INIT:
+            bootStatus = false;
+            if(LED_ACTIVE_ON_START) executeProfile();
+            break;
         case CMD_LED_SET:
             ledSet();
             break;
@@ -241,13 +245,18 @@ inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t po
 }
 
 void animationCallback(GPTDriver* _driver){
+    if(bootStatus){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/7);
+        animatedBoot(currentKeyLedColors);
+        return;
+    }
+
     profile currentFunction = profiles[currentProfile];
     if(currentFunction == animatedRainbow){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/7);
         currentFunction(currentKeyLedColors);
     }
 }
-
 
 /*
  * Application entry point.

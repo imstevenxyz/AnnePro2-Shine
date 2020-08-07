@@ -36,3 +36,10 @@ void animatedRainbow(led_t* currentKeyLedColors){
     }
     colAnimOffset = (colAnimOffset + 1)%LEN(colorPalette);
 }
+
+static bool keyIsActive = false;
+void animatedBoot(led_t* currentKeyLedColors){
+    keyIsActive = (keyIsActive) ? false : true;
+    uint32_t nextColor = (keyIsActive) ? 0xFF0000 : 0x000000;
+    setKeyColor(&currentKeyLedColors[0], nextColor);
+}

@@ -12,3 +12,4 @@ void miamiNights(led_t* currentKeyLedColors);
  * ANIMATED
  */
 void animatedRainbow(led_t* currentKeyLedColors);
+void animatedBoot(led_t* currentKeyLedColors);

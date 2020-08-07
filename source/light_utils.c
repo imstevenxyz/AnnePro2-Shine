@@ -6,7 +6,7 @@
 
 #define LEN(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 #define BRT_INTERVAL 51 //1, 3, 5, 15, 17, 51, 85, 255
-uint8_t brightness = 204;
+uint8_t brightness = 153; //Multiples of 51
 
 static const uint8_t modKeyIDs[] = {0, 13, 14, 28, 40, 41, 42, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69};
 static const uint8_t fnLayer1Keys[] = {
@@ -20,7 +20,6 @@ static const uint8_t fnLayer2Keys[] = {
     1, 2, 3, 4, 9, 10, 11, 12, // BLTH1-4 LEDON LEDOFF BRTNDOWN BRTNUP
     76 // FN2
 };
-
 
 /*
  * Set all keys to the same color

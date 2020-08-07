@@ -11,7 +11,7 @@
  */
 static void columnCallback(GPTDriver* driver);
 static void animationCallback(GPTDriver* driver);
-inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t port);
+inline void sPWM(uint8_t cycle, uint8_t currentCount, ioline_t port);
 void executeMsg(msg_t msg);
 void switchProfile(void);
 void executeProfile(void);
@@ -20,19 +20,21 @@ void ledSet(void);
 void ledRowSet(void);
 
 #define LED_ACTIVE_ON_START TRUE
-#define REFRESH_FREQUENCY   200
-#define ANIMATION_TIMER_FREQUENCY   60
+#define MAX_PWM_PERIOD 150 // PWM period, smaller = better performance but less colors
+#define REFRESH_FREQUENCY 50 // MCU cant handle PWM at high freq
+#define ANIMATION_TIMER_FREQUENCY 60
 
 /*
  * Active profiles
  * Add profiles from source/profiles.h in the profile array
  */
 typedef void (*profile)( led_t* );
-profile profiles[5] = {miamiNights, rainbowHorizontal, rainbowVertical, red, animatedRainbow};
+profile profiles[7] = {miamiNights, red, green, blue, rainbowHorizontal, rainbowVertical, animatedRainbow};
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
 static bool bootStatus = true;
+static uint32_t currentColumn = 0;
 
 led_t currentKeyLedColors[NUM_COLUMN * NUM_ROW];
 ioline_t ledColumns[NUM_COLUMN] = {
@@ -81,7 +83,7 @@ static const SerialConfig usart1Config = {
  * Column multiplex configuration
  */
 static const GPTConfig bftm0Config = {
-    .frequency = NUM_COLUMN * REFRESH_FREQUENCY * 2 * 16,
+    .frequency = NUM_COLUMN * REFRESH_FREQUENCY,
     .callback = columnCallback
 };
 
@@ -199,51 +201,45 @@ void ledSet(){
     }
 }
 
-void ledRowSet(){
-    size_t bytesRead;
-    bytesRead = sdReadTimeout(&SD1, commandBuffer, sizeof(uint16_t) * NUM_COLUMN + 1, 1000);
-    if(bytesRead >= sizeof(uint16_t) * NUM_COLUMN + 1){
-        if(commandBuffer[0] < NUM_ROW){
-            memcpy(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN],&commandBuffer[1], sizeof(uint16_t) * NUM_COLUMN);
-        }
-    }
-}
-
-static uint32_t currentColumn = 0;
-static uint32_t columnPWMCount = 0;
-
+/*
+ * Set led color using software PWM on timer interrupt
+ */
 void columnCallback(GPTDriver* _driver){
     (void)_driver;
-    palClearLine(ledColumns[currentColumn]);
     currentColumn = (currentColumn+1) % NUM_COLUMN;
+    
     palSetLine(ledColumns[currentColumn]);
-
-    if(columnPWMCount < 255){
+    for (size_t pwm = 0; pwm < MAX_PWM_PERIOD; pwm++){
         for (size_t row = 0; row < NUM_ROW; row++){
-            const led_t keyLED = currentKeyLedColors[currentColumn + (NUM_COLUMN * row)];
-            const uint8_t red = keyLED.red;
-            const uint8_t green = keyLED.green;
-            const uint8_t blue = keyLED.blue;
-
-            sPWM(red, columnPWMCount, 0, ledRows[row * 3]);
-            sPWM(green, columnPWMCount, red, ledRows[row * 3+1]);
-            sPWM(blue, columnPWMCount, red+green, ledRows[row * 3+2]);
+            led_t* color = &currentKeyLedColors[currentColumn + (NUM_COLUMN * row)];
+            sPWM(color->red, pwm, ledRows[row * 3]);
+            sPWM(color->green, pwm, ledRows[row * 3+1]);
+            sPWM(color->blue, pwm, ledRows[row * 3+2]);
         }
-        columnPWMCount++;
-    }else{
-        columnPWMCount = 0;
     }
+    palClearLine(ledColumns[currentColumn]);
 }
 
-inline void sPWM(uint8_t cycle, uint8_t currentCount, uint8_t start, ioline_t port){
-    if (start+cycle>0xFF) start = 0xFF - cycle;
-    if (start <= currentCount && currentCount < start+cycle){
-        palSetLine(port);
-    }else{
+inline void sPWM(uint8_t cycle, uint8_t currentCount, ioline_t port){
+    if(currentCount < 10 || currentCount > (MAX_PWM_PERIOD-10)){
         palClearLine(port);
+        return;
+    }
+
+    if(cycle > 0 && currentCount == 10){
+        palSetLine(port);
+        return;
+    }
+
+    if(currentCount > cycle){
+        palClearLine(port);
+        return;
     }
 }
 
+/*
+ * Set led color for animations on timer interrupt
+ */
 void animationCallback(GPTDriver* _driver){
     if(bootStatus){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/4);

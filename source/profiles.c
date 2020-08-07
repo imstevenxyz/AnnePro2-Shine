@@ -14,7 +14,8 @@ void red(led_t* currentKeyLedColors){
 
 void miamiNights(led_t* currentKeyLedColors){
     setAllKeysColor(currentKeyLedColors, 0x00979c);
-    setModKeysColor(currentKeyLedColors, 0x9c008f);
+    //setModKeysColor(currentKeyLedColors, 0x9c008f);
+    setRowKeysColor(currentKeyLedColors, 4, 0x9c008f);
 }
 
 void rainbowHorizontal(led_t* currentKeyLedColors){

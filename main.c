@@ -35,6 +35,7 @@ static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
 static bool bootStatus = true;
 static uint32_t currentColumn = 0;
+static uint8_t commandBuffer[64];
 
 led_t currentKeyLedColors[NUM_COLUMN * NUM_ROW];
 ioline_t ledColumns[NUM_COLUMN] = {
@@ -168,27 +169,37 @@ void disableLeds(){
     palClearLine(LINE_LED_PWR);
 }
 
-static uint8_t commandBuffer[64];
-
+/*
+ * Execute set command from qmk
+ */
 void ledSet(){
     uint8_t setMsg = sdGet(&SD1);
+
     switch (setMsg){
         case SET_KEY:
+            setKeyOverride();
             break;
         case SET_COL:
             break;
         case SET_ROW:
             break;
-        case SET_FN1:
-            break;
-        case SET_FN2:
+        case SET_FN:
+            setFNLayerOverride();
             break;
         case SET_MOD:
+            break;
+        case UNSET:
+            executeProfile();
             break;
         default:
             break;
     }
+}
 
+/*
+ * Set a key color based on input from qmk
+ */
+void setKeyOverride(){
     size_t bytesRead;
     bytesRead = sdReadTimeout(&SD1, commandBuffer, 5, 10000);
     if(bytesRead == 5){
@@ -196,8 +207,19 @@ void ledSet(){
             uint32_t color = ((uint32_t)commandBuffer[4] << 16 | (uint16_t)commandBuffer[3] << 8 | (uint8_t)commandBuffer[2]);
             setKeyColor(&currentKeyLedColors[commandBuffer[0] * NUM_COLUMN + commandBuffer[1]], color);
         }
-    }else{
-        executeProfile();
+    }
+}
+
+/*
+ * Set an FN Layer keys color based on input from qmk
+ */
+void setFNLayerOverride(){
+    size_t bytesRead;
+    bytesRead = sdReadTimeout(&SD1, commandBuffer, 4, 10000);
+    if(bytesRead == 4){
+        uint32_t color = ((uint32_t)commandBuffer[3] << 16 | (uint16_t)commandBuffer[2] << 8 | (uint8_t)commandBuffer[1]);
+        if(commandBuffer[0] == 1) setFN1KeysColor(currentKeyLedColors, color);
+        if(commandBuffer[0] == 2) setFN2KeysColor(currentKeyLedColors, color);
     }
 }
 

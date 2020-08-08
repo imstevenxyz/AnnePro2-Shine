@@ -12,13 +12,13 @@ static const uint8_t modKeyIDs[] = {0, 13, 14, 28, 40, 41, 42, 54, 55, 56, 57, 5
 static const uint8_t fnLayer1Keys[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, // ~ F1-F12
     16, 24, 25, 26, // Up, PS, HOME, END
-    29, 30, 40, 47, 48, // Left, Down, right, PGUP, PGDN
-    61, 62, // INSERT, DELETE
-    75 // FN1
+    29, 30, 31, 38, 39, // Left, Down, right, PGUP, PGDN
+    52, 53, // INSERT, DELETE
+    66 // FN1
 };
 static const uint8_t fnLayer2Keys[] = {
     1, 2, 3, 4, 9, 10, 11, 12, // BLTH1-4 LEDON LEDOFF BRTNDOWN BRTNUP
-    76 // FN2
+    67 // FN2
 };
 
 /*

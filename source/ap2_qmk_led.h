@@ -8,9 +8,9 @@
 #define CMD_POST_INIT                       0x20
 
 #define CMD_LED_SET                         0xA0
-#define SET_KEY                             0xA1
-#define SET_ROW                             0xA2
-#define SET_COL                             0xA3
-#define SET_FN1                             0xA4
-#define SET_FN2                             0xA5
-#define SET_MOD                             0xA6
+#define UNSET                               0xA1
+#define SET_KEY                             0xA2
+#define SET_ROW                             0xA3
+#define SET_COL                             0xA4
+#define SET_FN                              0xA5
+#define SET_MOD                             0xA7

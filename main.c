@@ -5,6 +5,7 @@
 #include "ap2_qmk_led.h"
 #include "light_utils.h"
 #include "profiles.h"
+#include "miniFastLED.h"
 
 /*
  * Function declarations
@@ -29,7 +30,11 @@ void ledRowSet(void);
  * Add profiles from source/profiles.h in the profile array
  */
 typedef void (*profile)( led_t* );
-profile profiles[7] = {miamiNights, red, green, blue, rainbowHorizontal, rainbowVertical, animatedRainbow};
+profile profiles[9] = {
+  red, green, blue, rainbowHorizontal, rainbowVertical, 
+  animatedRainbowVertical, animatedRainbowWaterfall, 
+  animatedBreathing, animatedSpectrum
+};
 static uint8_t currentProfile = 0;
 static uint8_t amountOfProfiles = sizeof(profiles)/sizeof(profile);
 
@@ -270,9 +275,21 @@ void animationCallback(GPTDriver* _driver){
     }
 
     profile currentFunction = profiles[currentProfile];
-    if(currentFunction == animatedRainbow){
-        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/7);
-        currentFunction(currentKeyLedColors);
+    if(currentFunction == animatedRainbowVertical){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/5);
+        currentFunction(ledColors);
+    }else if(currentFunction == animatedRainbowWaterfall){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/20);
+        currentFunction(ledColors);
+    }else if(currentFunction == animatedRainbowFlow){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/30);
+        currentFunction(ledColors);
+    }else if(currentFunction == animatedSpectrum){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/15);
+        currentFunction(ledColors);
+    }else if(currentFunction == animatedBreathing){
+        gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/30);
+        currentFunction(ledColors);
     }
 }
 

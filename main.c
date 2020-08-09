@@ -13,12 +13,13 @@
 static void columnCallback(GPTDriver* driver);
 static void animationCallback(GPTDriver* driver);
 inline void sPWM(uint8_t cycle, uint8_t currentCount, ioline_t port);
-void executeMsg(msg_t msg);
-void switchProfile(void);
-void executeProfile(void);
-void disableLeds(void);
-void ledSet(void);
-void ledRowSet(void);
+static void executeMsg(msg_t msg);
+static void switchProfile(void);
+static void executeProfile(void);
+static void disableLeds(void);
+static void ledSet(void);
+static void setKeyOverride(void);
+static void setFNLayerOverride(void);
 
 #define LED_ACTIVE_ON_START TRUE
 #define MAX_PWM_PERIOD 150 // PWM period, smaller = better performance but less colors
@@ -277,19 +278,19 @@ void animationCallback(GPTDriver* _driver){
     profile currentFunction = profiles[currentProfile];
     if(currentFunction == animatedRainbowVertical){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/5);
-        currentFunction(ledColors);
+        currentFunction(currentKeyLedColors);
     }else if(currentFunction == animatedRainbowWaterfall){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/20);
-        currentFunction(ledColors);
+        currentFunction(currentKeyLedColors);
     }else if(currentFunction == animatedRainbowFlow){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/30);
-        currentFunction(ledColors);
+        currentFunction(currentKeyLedColors);
     }else if(currentFunction == animatedSpectrum){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/15);
-        currentFunction(ledColors);
+        currentFunction(currentKeyLedColors);
     }else if(currentFunction == animatedBreathing){
         gptChangeInterval(_driver, ANIMATION_TIMER_FREQUENCY/30);
-        currentFunction(ledColors);
+        currentFunction(currentKeyLedColors);
     }
 }
 

@@ -22,8 +22,8 @@ static void setKeyOverride(void);
 static void setFNLayerOverride(void);
 
 #define LED_ACTIVE_ON_START TRUE
-#define MAX_PWM_PERIOD 150 // PWM period, smaller = better performance but less colors
-#define REFRESH_FREQUENCY 50 // MCU cant handle PWM at high freq
+#define MAX_PWM_PERIOD 140 // PWM period, smaller = better performance but less colors
+#define REFRESH_FREQUENCY 60 // MCU cant handle PWM at high freq
 #define ANIMATION_TIMER_FREQUENCY 60
 
 /*
@@ -31,9 +31,9 @@ static void setFNLayerOverride(void);
  * Add profiles from source/profiles.h in the profile array
  */
 typedef void (*profile)( led_t* );
-profile profiles[9] = {
-  red, green, blue, rainbowHorizontal, rainbowVertical, 
-  animatedRainbowVertical, animatedRainbowWaterfall, 
+profile profiles[10] = {
+  miamiNights, red, green, blue, rainbowHorizontal, rainbowVertical,
+  animatedRainbowVertical, animatedRainbowWaterfall,
   animatedBreathing, animatedSpectrum
 };
 static uint8_t currentProfile = 0;
@@ -249,17 +249,12 @@ void columnCallback(GPTDriver* _driver){
 }
 
 inline void sPWM(uint8_t cycle, uint8_t currentCount, ioline_t port){
-    if(currentCount < 10 || currentCount > (MAX_PWM_PERIOD-10)){
-        palClearLine(port);
-        return;
-    }
-
     if(cycle > 0 && currentCount == 10){
         palSetLine(port);
         return;
     }
 
-    if(currentCount > cycle){
+    if(currentCount > (MAX_PWM_PERIOD-10) || currentCount-10 == cycle){
         palClearLine(port);
         return;
     }

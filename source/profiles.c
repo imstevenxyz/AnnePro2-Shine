@@ -46,7 +46,6 @@ void animatedBoot(led_t* currentKeyLedColors){
     keyIsActive = (keyIsActive) ? false : true;
     uint32_t nextColor = (keyIsActive) ? 0xFF0000 : 0x000000;
     setKeyColor(&currentKeyLedColors[0], nextColor);
-    setAllKeysColor(currentKeyLedColors, 0xFF0000);
 }
 
 static uint8_t colAnimOffset = 0;
